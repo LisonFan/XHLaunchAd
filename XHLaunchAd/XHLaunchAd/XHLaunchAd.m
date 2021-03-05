@@ -91,7 +91,6 @@ static  SourceType _sourceType = SourceTypeLaunchImage;
 +(void)removeAndAnimated:(BOOL)animated{
     [[XHLaunchAd shareLaunchAd] removeAndAnimated:animated];
 }
-
 +(void)showAd{
     [[XHLaunchAd shareLaunchAd] showAd];
 }
@@ -172,9 +171,9 @@ static  SourceType _sourceType = SourceTypeLaunchImage;
     self = [super init];
     if (self) {
         XHWeakSelf
-        [self setupLaunchAd:NO];
+        [self setupLaunchAd];
         [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationWillEnterForegroundNotification object:nil queue:nil usingBlock:^(NSNotification * _Nonnull note) {
-            [self setupLaunchAdEnterForeground];
+            [self setupLaunchAdEnterForeground:NO];
         }];
         [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidEnterBackgroundNotification object:nil queue:nil usingBlock:^(NSNotification * _Nonnull note) {
             [self removeOnly];
@@ -189,17 +188,13 @@ static  SourceType _sourceType = SourceTypeLaunchImage;
     return self;
 }
 
--(void)setupLaunchAdEnterForeground{
-    [self setupLaunchAd:NO];
-}
-
--(void)setupLaunchAd:(BOOL)isManual{
+-(void)setupLaunchAdEnterForeground:(BOOL)isManual{
     switch (_launchAdType) {
         case XHLaunchAdTypeImage:{
             if (!isManual) {
                 if(!_imageAdConfiguration.showEnterForeground || _detailPageShowing) return;
             }
-            [self setupLaunchAdView];
+            [self setupLaunchAd];
             [self setupImageAdForConfiguration:_imageAdConfiguration];
         }
             break;
@@ -207,7 +202,7 @@ static  SourceType _sourceType = SourceTypeLaunchImage;
             if (!isManual) {
                 if(!_videoAdConfiguration.showEnterForeground || _detailPageShowing) return;
             }
-            [self setupLaunchAdView];
+            [self setupLaunchAd];
             [self setupVideoAdForConfiguration:_videoAdConfiguration];
         }
             break;
@@ -216,7 +211,7 @@ static  SourceType _sourceType = SourceTypeLaunchImage;
     }
 }
 
--(void)setupLaunchAdView{
+-(void)setupLaunchAd{
     UIWindow *window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     window.rootViewController = [XHLaunchAdController new];
     window.rootViewController.view.backgroundColor = [UIColor clearColor];
@@ -463,7 +458,7 @@ static  SourceType _sourceType = SourceTypeLaunchImage;
 }
 
 -(void)showAd{
-    [self setupLaunchAd:YES];
+    [self setupLaunchAdEnterForeground:YES];
 }
 
 -(void)clickAndPoint:(CGPoint)point{
@@ -513,7 +508,7 @@ static  SourceType _sourceType = SourceTypeLaunchImage;
     dispatch_source_set_timer(_waitDataTimer, dispatch_walltime(NULL, 0), period * NSEC_PER_SEC, 0);
     dispatch_source_set_event_handler(_waitDataTimer, ^{
         if(duration==0){
-            DISPATCH_SOURCE_CANCEL_SAFE(_waitDataTimer);
+            DISPATCH_SOURCE_CANCEL_SAFE(self->_waitDataTimer);
             dispatch_async(dispatch_get_main_queue(), ^{
                 [[NSNotificationCenter defaultCenter] postNotificationName:XHLaunchAdWaitDataDurationArriveNotification object:nil];
                 [self remove];
@@ -543,10 +538,10 @@ static  SourceType _sourceType = SourceTypeLaunchImage;
                 [self.delegate xhLaunchAd:self customSkipView:configuration.customSkipView duration:duration];
             }
             if(!configuration.customSkipView){
-                [_skipButton setTitleWithSkipType:configuration.skipButtonType duration:duration];
+                [self->_skipButton setTitleWithSkipType:configuration.skipButtonType duration:duration];
             }
             if(duration==0){
-                DISPATCH_SOURCE_CANCEL_SAFE(_skipTimer);
+                DISPATCH_SOURCE_CANCEL_SAFE(self->_skipTimer);
                 [self removeAndAnimate]; return ;
             }
             duration--;
@@ -571,8 +566,8 @@ static  SourceType _sourceType = SourceTypeLaunchImage;
             break;
         case ShowFinishAnimateLite:{
             [UIView transitionWithView:_window duration:duration options:UIViewAnimationOptionCurveEaseOut animations:^{
-                _window.transform = CGAffineTransformMakeScale(1.5, 1.5);
-                _window.alpha = 0;
+                self->_window.transform = CGAffineTransformMakeScale(1.5, 1.5);
+                self->_window.alpha = 0;
             } completion:^(BOOL finished) {
                 [self remove];
             }];
@@ -580,7 +575,7 @@ static  SourceType _sourceType = SourceTypeLaunchImage;
             break;
         case ShowFinishAnimateFlipFromLeft:{
             [UIView transitionWithView:_window duration:duration options:UIViewAnimationOptionTransitionFlipFromLeft animations:^{
-                _window.alpha = 0;
+                self->_window.alpha = 0;
             } completion:^(BOOL finished) {
                 [self remove];
             }];
@@ -588,7 +583,7 @@ static  SourceType _sourceType = SourceTypeLaunchImage;
             break;
         case ShowFinishAnimateFlipFromBottom:{
             [UIView transitionWithView:_window duration:duration options:UIViewAnimationOptionTransitionFlipFromBottom animations:^{
-                _window.alpha = 0;
+                self->_window.alpha = 0;
             } completion:^(BOOL finished) {
                 [self remove];
             }];
@@ -596,7 +591,7 @@ static  SourceType _sourceType = SourceTypeLaunchImage;
             break;
         case ShowFinishAnimateCurlUp:{
             [UIView transitionWithView:_window duration:duration options:UIViewAnimationOptionTransitionCurlUp animations:^{
-                _window.alpha = 0;
+                self->_window.alpha = 0;
             } completion:^(BOOL finished) {
                 [self remove];
             }];
@@ -614,7 +609,7 @@ static  SourceType _sourceType = SourceTypeLaunchImage;
     CGFloat duration = showFinishAnimateTimeDefault;
     if(configuration.showFinishAnimateTime>0) duration = configuration.showFinishAnimateTime;
     [UIView transitionWithView:_window duration:duration options:UIViewAnimationOptionTransitionNone animations:^{
-        _window.alpha = 0;
+        self->_window.alpha = 0;
     } completion:^(BOOL finished) {
         [self remove];
     }];

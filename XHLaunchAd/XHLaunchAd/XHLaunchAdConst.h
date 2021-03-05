@@ -19,7 +19,16 @@
 #define XH_IPHONEXR    ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(828, 1792), [[UIScreen mainScreen] currentMode].size) : NO)
 #define XH_IPHONEXSMAX    ([UIScreen instancesRespondToSelector:@selector(currentMode)] ? CGSizeEqualToSize(CGSizeMake(1242, 2688), [[UIScreen mainScreen] currentMode].size) : NO)
 #define XH_FULLSCREEN ((XH_IPHONEX || XH_IPHONEXR || XH_IPHONEXSMAX) ? YES : NO)
-
+#define XH_STATUSBAR_HEIGHT                                                                                               \
+    ({                                                                                                                    \
+        CGFloat height = 0.0;                                                                                             \
+        if (@available(iOS 13.0, *)) {                                                                                    \
+            height = [UIApplication sharedApplication].keyWindow.windowScene.statusBarManager.statusBarFrame.size.height; \
+        } else {                                                                                                          \
+            height = [[UIApplication sharedApplication] statusBarFrame].size.height;                                      \
+        }                                                                                                                 \
+        (height);                                                                                                         \
+    })
 
 #define XHISURLString(string)  ([string hasPrefix:@"https://"] || [string hasPrefix:@"http://"]) ? YES:NO
 #define XHStringContainsSubString(string,subString)  ([string rangeOfString:subString].location == NSNotFound) ? NO:YES
